@@ -114,13 +114,13 @@ class CatalogController < ApplicationController
     config.add_show_field 'source_site_t', :label => 'Library'
     config.add_show_field 'class_t', :label => 'Class'
     config.add_show_field 'alt_titles_t', :label => 'Alternate title'
-    config.add_show_field 'instance_of_token', :label => 'Instance of', :helper_method => 'link_for_my_tokens'
-    config.add_show_field 'instance_token', :label => 'Instance', :helper_method => 'link_for_my_tokens'
+    config.add_show_field 'instance_of_token', :label => 'Instance of', :helper_method => 'link_for_my_local_tokens'
+    config.add_show_field 'instance_token', :label => 'Instance', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'subject_token', :label => 'Topic', :helper_method => 'link_for_my_tokens'
-    config.add_show_field 'creator_token', :label => 'Creator', :helper_method => 'link_for_my_tokens'
-    config.add_show_field 'contributor_token', :label => 'Contributor', :helper_method => 'link_for_my_tokens'
-    config.add_show_field 'created_token', :label => 'Created', :helper_method => 'link_for_my_tokens'
-    config.add_show_field 'contributed_token', :label => 'Contributed to', :helper_method => 'link_for_my_tokens'
+    config.add_show_field 'creator_token', :label => 'Creator', :helper_method => 'link_for_my_local_tokens'
+    config.add_show_field 'contributor_token', :label => 'Contributor', :helper_method => 'link_for_my_local_tokens'
+    config.add_show_field 'created_token', :label => 'Created', :helper_method => 'link_for_my_local_tokens'
+    config.add_show_field 'contributed_token', :label => 'Contributed to', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'worldcat_id_token', :label => 'WorldCat ID', :helper_method => 'simple_link'
     config.add_show_field 'same_as_token', :label => 'Additional ID', :helper_method => 'simple_link'
     config.add_show_field 'identifier_token', :label => 'Identifiers', :helper_method => 'show_identifiers'
@@ -209,33 +209,85 @@ end
 
 module ApplicationHelper
   def link_for_my_tokens(options)
-	  options[:value].map do |value|
-		    parts = value.split('+++++')
-		    if parts.size == 1
-		    	parts[0]
-		    else
-		      link_to parts[0], url_for_document(parts[1])
-		    end
-	  end
+	html_str = ''
+    options[:value].map do |value|
+		parts = value.split('+++++')
+		if parts.size == 1
+		  html_str = html_str + parts[0]+'<br>'
+		else
+		  #link_to parts[0], 
+          output = '<a href="'+url_for_document(parts[1])+'" target="_blank">'+parts[0]+'</a>'
+          html_str = html_str + output+'<br>'
+		end
+	end
+    fIndex = html_str.rindex('<br>')
+    html_str = html_str.to_s[0, fIndex].strip
+    puts html_str
+    html_str.html_safe
+  end
+  
+  def link_for_my_local_tokens(options)
+    html_str = ''
+    options[:value].map do |value|
+        parts = value.split('+++++')
+        if parts.size == 1
+          html_str = html_str + parts[0]+'<br>'
+        else
+          #link_to parts[0], 
+          output = '<a href="'+url_for_document(parts[1])+'"">'+parts[0]+'</a>'
+          html_str = html_str + output+'<br>'
+        end
+    end
+    fIndex = html_str.rindex('<br>')
+    html_str = html_str.to_s[0, fIndex].strip
+    html_str.html_safe
   end
 
   def simple_link(options)
-	  options[:value].map do |value|
-      link_to value, value
-	  end
+    html_str = ''
+	options[:value].map do |value|
+        #link_to value, value
+        slash_index = value.rindex('/')
+        identifier = value.to_s[slash_index+1, value.size].strip
+        output = '<a href="'+value+'" target="_blank">'+identifier+'</a>'
+        html_str = html_str + output+'<br>'
+	end
+    fIndex = html_str.rindex('<br>')
+    html_str = html_str.to_s[0, fIndex].strip
+    html_str.html_safe
   end
 
   def show_identifiers(options)
-	  options[:value].map do |value|
-		    parts = value.split('+++++')
-		    if parts.size == 1
-		    	parts[0]
-		    elsif parts[0] == 'Identifier'
-		    	parts[1]
-		    else
-		      "%s: %s" % [parts[0], url_for_document(parts[1])]
-		    end
-	  end
+    html_str = ''
+    options[:value].map do |value| 
+        parts = value.split('+++++')
+        if parts.size == 1
+            output = parts[0]+'<br>'
+            html_str = html_str + output.html_safe
+        elsif parts[0] == 'Identifier'
+            output = parts[1]+'<br>'
+            html_str = html_str + output.html_safe
+        elsif parts[0] == 'LocalILSIdentifier'
+            url = 'https://newcatalog.library.cornell.edu/catalog/'+parts[1]
+            output = '<a href="'+url+'" target="_blank">'+parts[1]+'</a> ('+ parts[0] +')<br>'
+            html_str = html_str + output.html_safe
+        elsif parts[0] == 'Lccn'
+            slash_index = parts[1].rindex('/L')
+            lccn_Identifier = parts[1].to_s[0, slash_index].strip
+            url = 'https://lccn.loc.gov/'+lccn_Identifier
+            output = '<a href="'+url+'" target="_blank">'+parts[1]+'</a> ('+ parts[0] +')<br>'
+            html_str = html_str + output.html_safe
+        else
+            output = parts[1]+" (#{parts[0]}) <br>"
+            html_str = html_str + output.html_safe
+        end
+    end
+    fIndex = html_str.rindex('<br>')
+    html_str = html_str.to_s[0, fIndex].strip
+    if(options.size >=4)
+        html_str  = '<div style="width:300px;height:100px;border:1px solid #ccc;line-height:2em;overflow:auto;padding:5px;">' +html_str+'</div>'
+    end
+    html_str.html_safe
   end
 
 end
