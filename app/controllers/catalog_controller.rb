@@ -110,10 +110,11 @@ class CatalogController < ApplicationController
     config.add_show_field 'lc_callnum_display', :label => 'Call number'
     config.add_show_field 'isbn_t', :label => 'ISBN'
     config.add_show_field 'material_type_display', :label => 'Smaterials'
+    #config.add_show_field 'class_facet', :label => 'Class',  :helper_method => 'multiline_helper'
     
     config.add_show_field 'source_site_t', :label => 'Library'
     config.add_show_field 'class_t', :label => 'Class'
-    config.add_show_field 'alt_titles_t', :label => 'Alternate title'
+    config.add_show_field 'alt_titles_t', :label => 'Alternate title',  :helper_method => 'multiline_helper'
     config.add_show_field 'instance_of_token', :label => 'Instance of', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'instance_token', :label => 'Instance', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'subject_token', :label => 'Topic', :helper_method => 'link_for_my_tokens'
@@ -124,7 +125,7 @@ class CatalogController < ApplicationController
     config.add_show_field 'worldcat_id_token', :label => 'WorldCat ID', :helper_method => 'simple_link'
     config.add_show_field 'same_as_token', :label => 'Additional ID', :helper_method => 'simple_link'
     config.add_show_field 'identifier_token', :label => 'Identifiers', :helper_method => 'show_identifiers'
-    config.add_show_field 'publisher_t', :label => 'Publisher'
+    config.add_show_field 'publisher_t', :label => 'Publisher',  :helper_method => 'multiline_helper'
     config.add_show_field 'holding_t', :label => 'Holding'
     config.add_show_field 'extent_t', :label => 'Extent'
     config.add_show_field 'dimensions_t', :label => 'Dimensions'
@@ -210,7 +211,9 @@ end
 module ApplicationHelper
   def link_for_my_tokens(options)
 	html_str = ''
+    counter = 0
     options[:value].map do |value|
+        counter = counter+1
 		parts = value.split('+++++')
 		if parts.size == 1
 		  html_str = html_str + parts[0]+'<br>'
@@ -222,13 +225,17 @@ module ApplicationHelper
 	end
     fIndex = html_str.rindex('<br>')
     html_str = html_str.to_s[0, fIndex].strip
-    puts html_str
+    if counter > 5   # i do not know why options.size or options.length not working
+        html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
+    end
     html_str.html_safe
   end
   
   def link_for_my_local_tokens(options)
     html_str = ''
+    counter = 0
     options[:value].map do |value|
+        counter = counter+1
         parts = value.split('+++++')
         if parts.size == 1
           html_str = html_str + parts[0]+'<br>'
@@ -240,8 +247,26 @@ module ApplicationHelper
     end
     fIndex = html_str.rindex('<br>')
     html_str = html_str.to_s[0, fIndex].strip
+    if counter > 5    # i do not know why options.size or options.length not working
+        html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
+    end
     html_str.html_safe
   end
+
+def multiline_helper(options)
+        html_str = ''
+        counter = 0
+        options[:value].map do |value|
+            counter = counter+1
+            html_str = html_str + value+'<br>'
+        end
+        fIndex = html_str.rindex('<br>')
+        html_str = html_str.to_s[0, fIndex].strip
+        if counter > 5
+            html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
+        end
+        html_str.html_safe
+end
 
   def simple_link(options)
     html_str = ''
@@ -259,7 +284,9 @@ module ApplicationHelper
 
   def show_identifiers(options)
     html_str = ''
-    options[:value].map do |value| 
+    counter = 0
+    options[:value].map do |value|
+        counter = counter+1
         parts = value.split('+++++')
         if parts.size == 1
             output = parts[0]+'<br>'
@@ -284,8 +311,8 @@ module ApplicationHelper
     end
     fIndex = html_str.rindex('<br>')
     html_str = html_str.to_s[0, fIndex].strip
-    if(options.size >=4)
-        html_str  = '<div style="width:300px;height:100px;border:1px solid #ccc;line-height:2em;overflow:auto;padding:5px;">' +html_str+'</div>'
+    if counter > 5  # i do not know why options.size or options.length not working
+        html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
     end
     html_str.html_safe
   end
