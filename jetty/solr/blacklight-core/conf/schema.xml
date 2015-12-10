@@ -511,9 +511,36 @@
    <field name="subtitle_vern_display" type="string" indexed="false" stored="true" multiValued="false"/>
    <field name="author_display" type="string" indexed="false" stored="true" multiValued="false"/>
    <field name="author_vern_display" type="string" indexed="false" stored="true" multiValued="false"/>
-   
+   <field name="url_fulltext_display" type="string" indexed="false" stored="true" multiValued="false"/>
+   <field name="url_suppl_display" type="string" indexed="false" stored="true" multiValued="false"/>
+   <field name="instance_of_token" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="worldcat_id_token" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="dimensions_t" type="string" indexed="false" stored="true" multiValued="false"/>
+   <field name="birthdate_t" type="string" indexed="false" stored="true" multiValued="false"/>
    <!-- these fields are also used for display, so they must be stored -->
-   <field name="isbn_t" type="text" indexed="true" stored="true" multiValued="true"/>
+   <field name="isbn_t" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="supplementary_content_note_t" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="illustration_note_t" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="extent_t" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="holding_t" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="publisher_t" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="identifier_token" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="same_as_token" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="created_token" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="contributor_token" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="contributed_token" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="creator_token" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="subject_token" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="instance_token" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="alt_titles_t" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="material_type_display" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="lc_callnum_display" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="published_vern_display" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="published_display" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="language_display" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="source_site_display" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="class_display" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="class_facet" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="language_facet" type="string" indexed="true" stored="true" multiValued="true" />
    <field name="subject_topic_facet" type="string" indexed="true" stored="true" multiValued="true" />
    <field name="subject_era_facet" type="string" indexed="true" stored="true" multiValued="true" />
@@ -525,7 +552,7 @@
    <field name="pub_date_sort" type="tint" indexed="true" stored="true" multiValued="false"/>
      
    <!-- format is used for facet, display, and choosing which partial to use for the show view, so it must be stored and indexed -->
-   <field name="format" type="string" indexed="true" stored="true"/>
+   <field name="format" type="string" indexed="true" stored="true" multiValued="true"/>
    
    <!-- Dynamic field definitions.  If a field name is not found, dynamicFields
         will be used if the name matches any of the patterns.
@@ -569,7 +596,7 @@
    <dynamicField name="*_unstem_search" type="text_general" indexed="true" stored="false" multiValued="true" />
    <dynamicField name="*spell" type="textSpell" indexed="true" stored="false" multiValued="true" />
    
-   <dynamicField name="*_token" type="string" indexed="true" stored="true" multiValued="true" />
+   <!-- <dynamicField name="*_token" type="string" indexed="true" stored="true" multiValued="true" /> -->
 
 
    <!-- uncomment the following to ignore any fields that don't already match an existing 
