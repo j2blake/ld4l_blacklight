@@ -515,8 +515,8 @@
    <field name="url_suppl_display" type="string" indexed="false" stored="true" multiValued="false"/>
    <field name="instance_of_token" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="worldcat_id_token" type="string" indexed="true" stored="true" multiValued="false"/>
-   <field name="dimensions_t" type="string" indexed="true" stored="true" multiValued="false"/>
-   <field name="birthdate_t" type="string" indexed="true" stored="true" multiValued="false"/>
+   <field name="dimensions_t" type="string" indexed="false" stored="true" multiValued="false"/>
+   <field name="birthdate_t" type="string" indexed="false" stored="true" multiValued="false"/>
    <!-- these fields are also used for display, so they must be stored -->
    <field name="isbn_t" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="supplementary_content_note_t" type="string" indexed="true" stored="true" multiValued="true"/>
@@ -564,7 +564,7 @@
    <dynamicField name="*_i"  type="int"    indexed="true"  stored="true"/>
    <dynamicField name="*_s"  type="string"  indexed="true"  stored="true"/>
    <dynamicField name="*_l"  type="long"   indexed="true"  stored="true"/>
-   <!-- <dynamicField name="*_t"  type="text"    indexed="true"  stored="true" multiValued="true"/> -->
+   <dynamicField name="*_t"  type="text"    indexed="true"  stored="true" multiValued="true"/>
    <dynamicField name="*_txt" type="text_general"    indexed="true"  stored="true" multiValued="true"/>
    <dynamicField name="*_b"  type="boolean" indexed="true"  stored="true"/>
    <dynamicField name="*_f"  type="float"  indexed="true"  stored="true"/>
@@ -590,9 +590,9 @@
 
    <dynamicField name="random_*" type="random" />
 
-   <!-- <dynamicField name="*_display" type="string" indexed="false" stored="true" multiValued="true" />
+   <dynamicField name="*_display" type="string" indexed="false" stored="true" multiValued="true" />
    <dynamicField name="*_facet" type="string" indexed="true" stored="true" multiValued="true" />
-   <dynamicField name="*_sort" type="alphaOnlySort" indexed="true" stored="false" multiValued="false" /> -->
+   <dynamicField name="*_sort" type="alphaOnlySort" indexed="true" stored="false" multiValued="false" />
    <dynamicField name="*_unstem_search" type="text_general" indexed="true" stored="false" multiValued="true" />
    <dynamicField name="*spell" type="textSpell" indexed="true" stored="false" multiValued="true" />
    
