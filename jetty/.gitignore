@@ -2,4 +2,4 @@ logs/*.log
 .DS_Store
 tmp
 solr-webapp
-solr/*-core/data
+

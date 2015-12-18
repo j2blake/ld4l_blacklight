@@ -63,16 +63,18 @@ class CatalogController < ApplicationController
     config.add_facet_field 'subject_era_facet', :label => 'Era'  
     
     config.add_facet_field 'source_site_facet', :label => 'Library'  
-    config.add_facet_field 'class_facet', :label => 'Class'  
 
     config.add_facet_field 'example_pivot_field', :label => 'Pivot Field', :pivot => ['format', 'language_facet']
-
+      
     config.add_facet_field 'example_query_facet_field', :label => 'Publish Date', :query => {
        :years_5 => { :label => 'within 5 Years', :fq => "pub_date:[#{Time.now.year - 5 } TO *]" },
        :years_10 => { :label => 'within 10 Years', :fq => "pub_date:[#{Time.now.year - 10 } TO *]" },
        :years_25 => { :label => 'within 25 Years', :fq => "pub_date:[#{Time.now.year - 25 } TO *]" }
     }
 
+    config.add_facet_field 'category_facet', :label => 'Category', :show => false
+    config.add_facet_field 'class_facet', :label => 'Class', :show => false
+    config.add_facet_field 'category_class_pivot_field', :label => 'Category/Class', :pivot => ['category_facet', 'class_facet']
 
     # Have BL send all facet field names to Solr, which has been the default
     # previously. Simply remove these lines if you'd rather use Solr request
@@ -236,11 +238,14 @@ module ApplicationHelper
   def link_for_my_local_tokens(options)
     html_str = ''
     counter = 0
-    options[:value].map do |value|
+    values = options[:value]
+    values = [values] unless Array === values
+    values.map do |value|
         counter = counter+1
         parts = value.split('+++++')
         if parts.size == 1
-          html_str = html_str + parts[0]+'<br>'
+            puts "BOGUS #{parts.inspect}"
+          html_str = html_str + parts[0] +'<br>'
         else
           #link_to parts[0], 
           output = '<a href="'+url_for_document(parts[1])+'"">'+parts[0]+'</a>'
@@ -272,7 +277,9 @@ end
 
   def simple_link(options)
     html_str = ''
-	options[:value].map do |value|
+    values = options[:value]
+    values = [values] unless Array === values
+    values.map do |value|
         #link_to value, value
         slash_index = value.rindex('/')
         identifier = value.to_s[slash_index+1, value.size].strip
