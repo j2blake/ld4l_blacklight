@@ -120,7 +120,7 @@ class CatalogController < ApplicationController
     config.add_show_field 'class_display', :label => 'Class'
     config.add_show_field 'alt_titles_t', :label => 'Alternate title',  :helper_method => 'multiline_helper'
     config.add_show_field 'instance_of_token', :label => 'Instance of', :helper_method => 'link_for_my_local_tokens'
-    config.add_show_field 'instance_token', :label => 'Instance', :helper_method => 'link_for_my_local_tokens'
+    config.add_show_field 'instance_token', :label => 'Instance', :helper_method => 'show_instances'
     config.add_show_field 'subject_token', :label => 'Topic', :helper_method => 'link_for_my_tokens'
     config.add_show_field 'creator_token', :label => 'Creator', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'contributor_token', :label => 'Contributor', :helper_method => 'link_for_my_local_tokens'
@@ -129,13 +129,14 @@ class CatalogController < ApplicationController
     config.add_show_field 'worldcat_id_token', :label => 'WorldCat ID', :helper_method => 'simple_link'
     config.add_show_field 'same_as_token', :label => 'Additional ID', :helper_method => 'simple_link'
     config.add_show_field 'identifier_token', :label => 'Identifiers', :helper_method => 'show_identifiers'
-    config.add_show_field 'publisher_t', :label => 'Publisher',  :helper_method => 'multiline_helper'
+    config.add_show_field 'publisher_t', :label => 'Publisher', :helper_method => 'multiline_helper'
     config.add_show_field 'holding_t', :label => 'Holding'
     config.add_show_field 'extent_t', :label => 'Extent'
     config.add_show_field 'dimensions_t', :label => 'Dimensions'
     config.add_show_field 'illustration_note_t', :label => 'Illustration note'
     config.add_show_field 'supplementary_content_note_t', :label => 'Supplementary content note'
     config.add_show_field 'birthdate_t', :label => 'Date of birth'
+    config.add_show_field 'uri_token', :label => 'RDF linked data', :helper_method => 'show_rdf_link'
 
     # "fielded" search configuration. Used by pulldown among other places.
     # For supported keys in hash, see rdoc for Blacklight::SearchFields
@@ -309,6 +310,30 @@ module ApplicationHelper
     end
     html_str.html_safe
   end
+  
+  def show_instances(options)
+    html_array = []
+    values = options[:value]
+    values = [values] unless Array === values
+    values.map do |value|
+      html_array << parse_json(value, 'id', 'label') do |v|
+        if v['extent'] 
+          '<a href="%s">%s</a>' % [url_for_document(v['id']), v['label'] + ' - ' + v['extent']]
+        else
+          '<a href="%s">%s</a>' % [url_for_document(v['id']), v['label']]
+        end
+      end
+    end
+    html_str = html_array.join('<br>')
+    if values.size > 5
+        html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
+    end
+    html_str.html_safe
+  end
+  
+  def show_rdf_link(options)
+    ('<a href="%s">%s</a>' % [options[:value], options[:value]]).html_safe
+  end
 
   #
   # Parse a JSON-formatted string, and provide it to the supplied block. The
@@ -331,8 +356,9 @@ module ApplicationHelper
         yield json
       end
     rescue
-      puts "JSON PROBLEM %s, value='%s'" % [$!, value]
+      puts "JSON PROBLEM " + $!.to_s
       puts $!.backtrace.join("\n")
+      puts "VALUE IS " + value
       value
     end
   end
