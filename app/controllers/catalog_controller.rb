@@ -215,21 +215,19 @@ end
 module ApplicationHelper
   def link_for_my_tokens(options)
 	html_str = ''
-    counter = 0
     options[:value].map do |value|
-        counter = counter+1
-		parts = value.split('+++++')
-		if parts.size == 1
-		  html_str = html_str + parts[0]+'<br>'
-		else
-		  #link_to parts[0], 
-          output = '<a href="'+url_for_document(parts[1])+'" target="_blank">'+parts[0]+'</a>'
-          html_str = html_str + output+'<br>'
-		end
-	end
+      output = parse_json(value, 'label') do |v|
+        if (v['id'])
+          '<a href="%s" target="_blank">%s</a>' % [url_for_document(v['id']), v['label']]
+        else
+          v['label']
+        end
+      end
+      html_str = html_str + output+'<br>'
+	  end
     fIndex = html_str.rindex('<br>')
     html_str = html_str.to_s[0, fIndex].strip
-    if counter > 5   # i do not know why options.size or options.length not working
+    if options[:value].size > 5
         html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
     end
     html_str.html_safe
@@ -237,43 +235,34 @@ module ApplicationHelper
   
   def link_for_my_local_tokens(options)
     html_str = ''
-    counter = 0
     values = options[:value]
     values = [values] unless Array === values
     values.map do |value|
-        counter = counter+1
-        parts = value.split('+++++')
-        if parts.size == 1
-            puts "BOGUS #{parts.inspect}"
-          html_str = html_str + parts[0] +'<br>'
-        else
-          #link_to parts[0], 
-          output = '<a href="'+url_for_document(parts[1])+'"">'+parts[0]+'</a>'
-          html_str = html_str + output+'<br>'
-        end
+      output = parse_json(value, 'id', 'label') do |v| 
+        '<a href="%s">%s</a>' % [url_for_document(v['id']), v['label']]
+      end
+      html_str = html_str + output+'<br>'
     end
     fIndex = html_str.rindex('<br>')
     html_str = html_str.to_s[0, fIndex].strip
-    if counter > 5    # i do not know why options.size or options.length not working
+    if values.size > 5
         html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
     end
     html_str.html_safe
   end
-
-def multiline_helper(options)
+  
+  def multiline_helper(options)
         html_str = ''
-        counter = 0
         options[:value].map do |value|
-            counter = counter+1
             html_str = html_str + value+'<br>'
         end
         fIndex = html_str.rindex('<br>')
         html_str = html_str.to_s[0, fIndex].strip
-        if counter > 5
+        if options[:value].size > 5
             html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
         end
         html_str.html_safe
-end
+  end
 
   def simple_link(options)
     html_str = ''
@@ -293,37 +282,58 @@ end
 
   def show_identifiers(options)
     html_str = ''
-    counter = 0
     options[:value].map do |value|
-        counter = counter+1
-        parts = value.split('+++++')
-        if parts.size == 1
-            output = parts[0]+'<br>'
-            html_str = html_str + output.html_safe
-        elsif parts[0] == 'Identifier'
-            output = parts[1]+'<br>'
-            html_str = html_str + output.html_safe
-        elsif parts[0] == 'LocalILSIdentifier'
-            url = 'https://newcatalog.library.cornell.edu/catalog/'+parts[1]
-            output = '<a href="'+url+'" target="_blank">'+parts[1]+'</a> ('+ parts[0] +')<br>'
-            html_str = html_str + output.html_safe
-        elsif parts[0] == 'Lccn'
-            slash_index = parts[1].rindex('/L')
-            lccn_Identifier = parts[1].to_s[0, slash_index].strip
-            url = 'https://lccn.loc.gov/'+lccn_Identifier
-            output = '<a href="'+url+'" target="_blank">'+parts[1]+'</a> ('+ parts[0] +')<br>'
-            html_str = html_str + output.html_safe
+      output = parse_json(value, 'label') do |v|
+        label, localname = v.values_at('label', 'localname')
+        case localname
+        when nil
+          label
+        when 'Identifier'
+          label
+        when 'LocalILSIdentifier'
+          '<a href="https://newcatalog.library.cornell.edu/catalog/%s" target="_blank">%s</a> (%s)' % [localname, label, localname]
+        when 'Lccn'
+          slash_index = label.rindex('/L')
+          lccn_Identifier = label[0, slash_index].strip
+          '<a href="https://lccn.loc.gov/%s" target="_blank">%s</a> (%s)' % [lccn_Identifier, label, localname]
         else
-            output = parts[1]+" (#{parts[0]}) <br>"
-            html_str = html_str + output.html_safe
+          label + " (#{localname})"
         end
+      end
+      html_str = html_str + output.html_safe + '<br>'
     end
     fIndex = html_str.rindex('<br>')
     html_str = html_str.to_s[0, fIndex].strip
-    if counter > 5  # i do not know why options.size or options.length not working
+    if options[:value].size > 5
         html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
     end
     html_str.html_safe
   end
 
+  #
+  # Parse a JSON-formatted string, and provide it to the supplied block. The
+  # return value is the value of the block.
+  #
+  # If the string is not valid JSON, write a message to the log and return the
+  # original string.
+  #
+  # If a list of required keys are provided, then the parsed JSON object must
+  # contain all of these keys, or is considered an error. Again, a message is
+  # written to the log, and the original string is returned.
+  #
+  def parse_json(value, *required_keys)
+    begin
+      json = JSON.parse(value)
+      if required_keys.any? {|k| !json[k]}
+        puts "JSON is missing required fields: %s, required: %s" % [value, required_keys.inspect] 
+        value
+      else
+        yield json
+      end
+    rescue
+      puts "JSON PROBLEM %s, value='%s'" % [$!, value]
+      puts $!.backtrace.join("\n")
+      value
+    end
+  end
 end
