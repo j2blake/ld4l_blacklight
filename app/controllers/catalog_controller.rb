@@ -273,7 +273,7 @@ module ApplicationHelper
         #link_to value, value
         slash_index = value.rindex('/')
         identifier = value.to_s[slash_index+1, value.size].strip
-        output = '<a href="'+value+'" target="_blank">'+identifier+'</a>'
+        output = identifier + ' <a href="'+value+'" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>'
         html_str = html_str + output+'<br>'
 	end
     fIndex = html_str.rindex('<br>')
@@ -292,11 +292,11 @@ module ApplicationHelper
         when 'Identifier'
           label
         when 'LocalILSIdentifier'
-          '<a href="https://newcatalog.library.cornell.edu/catalog/%s" target="_blank">%s</a> (%s)' % [localname, label, localname]
+          '%s (%s) <a href="https://newcatalog.library.cornell.edu/catalog/%s" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>'% [label, localname, label]
         when 'Lccn'
           slash_index = label.rindex('/L')
           lccn_Identifier = label[0, slash_index].strip
-          '<a href="https://lccn.loc.gov/%s" target="_blank">%s</a> (%s)' % [lccn_Identifier, label, localname]
+          '%s (%s) <a href="https://lccn.loc.gov/%s" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>'% [label, localname, lccn_Identifier]
         else
           label + " (#{localname})"
         end
