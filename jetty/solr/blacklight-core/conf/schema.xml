@@ -517,6 +517,7 @@
    <field name="uri_token" type="string" indexed="true" stored="true" multiValued="false"/>
    <field name="birthdate_t" type="string" indexed="false" stored="true" multiValued="false"/>
    <!-- these fields are also used for display, so they must be stored -->
+   <field name="related_works_token" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="instance_of_token" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="dimensions_t" type="string" indexed="false" stored="true" multiValued="true"/>
    <field name="isbn_t" type="string" indexed="true" stored="true" multiValued="true"/>

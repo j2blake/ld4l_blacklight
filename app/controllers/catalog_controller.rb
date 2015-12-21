@@ -94,7 +94,7 @@ class CatalogController < ApplicationController
     config.add_index_field 'published_vern_display', :label => 'Published'
     config.add_index_field 'lc_callnum_display', :label => 'Call number'
     
-    config.add_index_field 'class_facet', :label => 'Class'
+    config.add_index_field 'class_display', :label => 'Class'
 
     # solr fields to be displayed in the show (single result) view
     #   The ordering of the field names is the order of the display 
@@ -136,6 +136,7 @@ class CatalogController < ApplicationController
     config.add_show_field 'illustration_note_t', :label => 'Illustration note'
     config.add_show_field 'supplementary_content_note_t', :label => 'Supplementary content note'
     config.add_show_field 'birthdate_t', :label => 'Date of birth'
+    config.add_show_field 'related_works_token', :label => 'Related works', :helper_method => 'show_related_works'
     config.add_show_field 'uri_token', :label => 'RDF linked data', :helper_method => 'show_rdf_link'
 
     # "fielded" search configuration. Used by pulldown among other places.
@@ -335,6 +336,26 @@ module ApplicationHelper
     ('<a href="%s">%s</a>' % [options[:value], options[:value]]).html_safe
   end
 
+  def show_related_works(options)
+    html_array = []
+    values = options[:value]
+    values = [values] unless Array === values
+    jsons = values.map {|v| parse_json(v) {|v| v}}.sort {|a,b| a['property'] <=> b['property']}
+    jsons.each do |json|
+      prop = uri_localname(json['property'])
+      if json['id']
+        html_array << '%s ==> <a href="%s">%s</a>' % [prop, url_for_document(json['id']), json['label']]
+      else
+        html_array << '%s ==> <a href="%s">%s</a>' % [prop, uri, json['label']]
+      end
+    end
+    html_str = html_array.join('<br>')
+    if values.size > 5
+        html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
+    end
+    html_str.html_safe
+  end
+
   #
   # Parse a JSON-formatted string, and provide it to the supplied block. The
   # return value is the value of the block.
@@ -362,4 +383,14 @@ module ApplicationHelper
       value
     end
   end
+  
+  def uri_localname(uri)
+    delimiter = uri.rindex(/[\/#]/)
+    if delimiter
+      uri[delimiter+1..-1]
+    else
+      uri
+    end
+  end
+
 end
