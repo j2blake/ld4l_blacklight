@@ -219,8 +219,8 @@ module ApplicationHelper
 	html_str = ''
     options[:value].map do |value|
       output = parse_json(value, 'label') do |v|
-        if (v['id'])
-          '<a href="%s" target="_blank">%s</a>' % [url_for_document(v['id']), v['label']]
+        if (v['uri'])
+          '%s <a href="%s" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>' % [v['label'], url_for_document(v['uri'])]
         else
           v['label']
         end
