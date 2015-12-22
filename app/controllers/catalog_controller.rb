@@ -57,7 +57,7 @@ class CatalogController < ApplicationController
     config.add_facet_field 'format', :label => 'Format'
     config.add_facet_field 'pub_date', :label => 'Publication Year', :single => true
     config.add_facet_field 'subject_topic_facet', :label => 'Topic', :limit => 20 
-    config.add_facet_field 'language_facet', :label => 'Language', :limit => 20 
+    config.add_facet_field 'language_facet', :label => 'Language', :limit => 20, :sort => 'index'
     config.add_facet_field 'lc_1letter_facet', :label => 'Call Number' 
     config.add_facet_field 'subject_geo_facet', :label => 'Region' 
     config.add_facet_field 'subject_era_facet', :label => 'Era'  
@@ -72,8 +72,8 @@ class CatalogController < ApplicationController
        :years_25 => { :label => 'within 25 Years', :fq => "pub_date:[#{Time.now.year - 25 } TO *]" }
     }
 
-    config.add_facet_field 'category_facet', :label => 'Category', :show => false
-    config.add_facet_field 'class_facet', :label => 'Class', :show => false
+    config.add_facet_field 'category_facet', :label => 'Category', :show => false, :sort => 'index'
+    config.add_facet_field 'class_facet', :label => 'Class', :show => false, :sort => 'index'
     config.add_facet_field 'category_class_pivot_field', :label => 'Category/Class', :pivot => ['category_facet', 'class_facet']
 
     # Have BL send all facet field names to Solr, which has been the default
@@ -117,7 +117,7 @@ class CatalogController < ApplicationController
     #config.add_show_field 'class_facet', :label => 'Class',  :helper_method => 'multiline_helper'
     
     config.add_show_field 'source_site_display', :label => 'Library'
-    config.add_show_field 'class_display', :label => 'Class'
+    config.add_show_field 'class_display', :label => 'Class',  :helper_method => 'multiline_helper'
     config.add_show_field 'alt_titles_t', :label => 'Alternate title',  :helper_method => 'multiline_helper'
     config.add_show_field 'instance_of_token', :label => 'Instance of', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'instance_token', :label => 'Instance', :helper_method => 'show_instances'
@@ -217,7 +217,8 @@ end
 module ApplicationHelper
   def link_for_my_tokens(options)
 	html_str = ''
-    options[:value].map do |value|
+  options_set = removeDuplicates(options[:value])
+    options_set.map do |value|
       output = parse_json(value, 'label') do |v|
         if (v['uri'])
           '%s <a href="%s" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>' % [v['label'], url_for_document(v['uri'])]
@@ -229,7 +230,7 @@ module ApplicationHelper
 	  end
     fIndex = html_str.rindex('<br>')
     html_str = html_str.to_s[0, fIndex].strip
-    if options[:value].size > 5
+    if options_set.size > 5
         html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
     end
     html_str.html_safe
@@ -319,7 +320,7 @@ module ApplicationHelper
     values.map do |value|
       html_array << parse_json(value, 'id', 'label') do |v|
         if v['extent'] 
-          '<a href="%s">%s</a>' % [url_for_document(v['id']), v['label'] + ' - ' + v['extent']]
+          '<a href="%s">%s</a>' % [url_for_document(v['id']), v['label']] + ' - (Extent: ' + v['extent']+')'
         else
           '<a href="%s">%s</a>' % [url_for_document(v['id']), v['label']]
         end
@@ -392,5 +393,49 @@ module ApplicationHelper
       uri
     end
   end
+
+  def removeDuplicates(array)
+    labels = Set.new
+    options = Array.new
+    index = 0
+    array.map do |value|
+      json = JSON.parse(value)
+      label = json['label']
+      if labels.include?(label)
+        label_index = getIndexBasedOnLabel(options, label)
+        data = options[label_index]
+        json1 = JSON.parse(data)
+        if json1['uri'] === nil && json['uri'] != nil
+          options.delete(data)
+        end
+        if json['uri']
+          options[index] = value
+          index = index+1
+        end
+      else
+        labels.add(label)
+        options[index] = value
+        index = index+1
+      end   
+    end
+    result = Set.new
+    options.map do |value|
+      if value
+        result.add(value)
+      end
+    end
+    result
+  end
+
+  def getIndexBasedOnLabel(options, label)
+    options.each_with_index {|value, index|
+      json = JSON.parse(value)
+      if json['label'] === label
+        return index
+      end
+    }
+  end
+
+
 
 end
