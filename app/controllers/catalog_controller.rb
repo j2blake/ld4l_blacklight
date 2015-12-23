@@ -121,7 +121,7 @@ class CatalogController < ApplicationController
     config.add_show_field 'alt_titles_t', :label => 'Alternate title',  :helper_method => 'multiline_helper'
     config.add_show_field 'instance_of_token', :label => 'Instance of', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'instance_token', :label => 'Instance', :helper_method => 'show_instances'
-    config.add_show_field 'subject_token', :label => 'Topic', :helper_method => 'link_for_my_tokens'
+    config.add_show_field 'subject_token', :label => 'Topic', :helper_method => 'show_subjects'
     config.add_show_field 'creator_token', :label => 'Creator', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'contributor_token', :label => 'Contributor', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'created_token', :label => 'Created', :helper_method => 'link_for_my_local_tokens'
@@ -216,77 +216,57 @@ end
 
 module ApplicationHelper
   def link_for_my_tokens(options)
-	html_str = ''
-  options_set = removeDuplicates(options[:value])
-    options_set.map do |value|
-      output = parse_json(value, 'label') do |v|
+    options_set = removeDuplicates(options[:value])
+    html_array = options_set.map do |value|
+      parse_json(value, 'label') do |v|
         if (v['uri'])
           '%s <a href="%s" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>' % [v['label'], url_for_document(v['uri'])]
         else
           v['label']
         end
       end
-      html_str = html_str + output+'<br>'
 	  end
-    fIndex = html_str.rindex('<br>')
-    html_str = html_str.to_s[0, fIndex].strip
-    if options_set.size > 5
-        html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
-    end
-    html_str.html_safe
+	  format_html_array(html_array)
   end
   
   def link_for_my_local_tokens(options)
-    html_str = ''
     values = options[:value]
     values = [values] unless Array === values
-    values.map do |value|
-      output = parse_json(value, 'id', 'label') do |v| 
+    html_array = values.map do |value|
+      parse_json(value, 'id', 'label') do |v| 
         '<a href="%s">%s</a>' % [url_for_document(v['id']), v['label']]
       end
-      html_str = html_str + output+'<br>'
     end
-    fIndex = html_str.rindex('<br>')
-    html_str = html_str.to_s[0, fIndex].strip
-    if values.size > 5
-        html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
-    end
-    html_str.html_safe
+    format_html_array(html_array)
   end
   
   def multiline_helper(options)
-        html_str = ''
-        options[:value].map do |value|
-            html_str = html_str + value+'<br>'
-        end
-        fIndex = html_str.rindex('<br>')
-        html_str = html_str.to_s[0, fIndex].strip
-        if options[:value].size > 5
-            html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
-        end
-        html_str.html_safe
+    format_html_array(options[:value])
   end
 
   def simple_link(options)
-    html_str = ''
     values = options[:value]
     values = [values] unless Array === values
-    values.map do |value|
-        #link_to value, value
+    html_array = values.map do |value|
         slash_index = value.rindex('/')
         identifier = value.to_s[slash_index+1, value.size].strip
-        output = identifier + ' <a href="'+value+'" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>'
-        html_str = html_str + output+'<br>'
+        identifier + ' <a href="'+value+'" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>'
 	end
-    fIndex = html_str.rindex('<br>')
-    html_str = html_str.to_s[0, fIndex].strip
-    html_str.html_safe
+	  format_html_array(html_array)
   end
 
+  def show_subjects(options)
+    html_array = options[:value].map do |value|
+      parse_json(value) do |v|
+        'BOGUS Subject: ' + v.inspect # <<<<<<<< REPLACE THIS LINE
+      end
+    end
+    format_html_array(html_array)
+  end
+  
   def show_identifiers(options)
-    html_str = ''
-    options[:value].map do |value|
-      output = parse_json(value, 'label') do |v|
+    html_array = options[:value].map do |value|
+      parse_json(value, 'label') do |v|
         label, localname = v.values_at('label', 'localname')
         case localname
         when nil
@@ -303,22 +283,15 @@ module ApplicationHelper
           label + " (#{localname})"
         end
       end
-      html_str = html_str + output.html_safe + '<br>'
     end
-    fIndex = html_str.rindex('<br>')
-    html_str = html_str.to_s[0, fIndex].strip
-    if options[:value].size > 5
-        html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
-    end
-    html_str.html_safe
+    format_html_array(html_array)
   end
   
   def show_instances(options)
-    html_array = []
     values = options[:value]
     values = [values] unless Array === values
-    values.map do |value|
-      html_array << parse_json(value, 'id', 'label') do |v|
+    html_array = values.map do |value|
+      parse_json(value, 'id', 'label') do |v|
         if v['extent'] 
           '<a href="%s">%s</a>' % [url_for_document(v['id']), v['label']] + ' - (Extent: ' + v['extent']+')'
         else
@@ -326,11 +299,7 @@ module ApplicationHelper
         end
       end
     end
-    html_str = html_array.join('<br>')
-    if values.size > 5
-        html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
-    end
-    html_str.html_safe
+    format_html_array(html_array)
   end
   
   def show_rdf_link(options)
@@ -338,23 +307,18 @@ module ApplicationHelper
   end
 
   def show_related_works(options)
-    html_array = []
     values = options[:value]
     values = [values] unless Array === values
     jsons = values.map {|v| parse_json(v) {|v| v}}.sort {|a,b| a['property'] <=> b['property']}
-    jsons.each do |json|
+    html_array = jsons.map do |json|
       prop = uri_localname(json['property'])
       if json['id']
-        html_array << '%s ==> <a href="%s">%s</a>' % [prop, url_for_document(json['id']), json['label']]
+        '%s ==> <a href="%s">%s</a>' % [prop, url_for_document(json['id']), json['label']]
       else
-        html_array << '%s ==> <a href="%s">%s</a>' % [prop, uri, json['label']]
+        '%s ==> <a href="%s">%s</a>' % [prop, uri, json['label']]
       end
     end
-    html_str = html_array.join('<br>')
-    if values.size > 5
-        html_str  = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">' +html_str+'</div>'
-    end
-    html_str.html_safe
+    format_html_array(html_array)
   end
 
   #
@@ -385,6 +349,20 @@ module ApplicationHelper
     end
   end
   
+  #
+  # Take an array of HTML values, and insert <br> between them. If more than 5 values,
+  # wrap them in a scrolling div. Make the whole thing html_safe, and return it.
+  #
+  SCROLLING_DIV_BEGIN = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">'
+  SCROLLING_DIV_END = '</div>'
+  def format_html_array(html_array)
+    html_str = html_array.join('<br>')
+    if html_array.size > 5
+      html_str = SCROLLING_DIV_BEGIN + html_str + SCROLLING_DIV_END
+    end
+    html_str.html_safe
+  end
+
   def uri_localname(uri)
     delimiter = uri.rindex(/[\/#]/)
     if delimiter
