@@ -129,7 +129,7 @@ class CatalogController < ApplicationController
     config.add_show_field 'worldcat_id_token', :label => 'WorldCat ID', :helper_method => 'simple_link'
     config.add_show_field 'same_as_token', :label => 'Additional ID', :helper_method => 'simple_link'
     config.add_show_field 'identifier_token', :label => 'Identifiers', :helper_method => 'show_identifiers'
-    config.add_show_field 'publisher_t', :label => 'Publisher', :helper_method => 'multiline_helper'
+    config.add_show_field 'publisher_t', :label => 'Publisher', :helper_method => 'show_publishers'
     config.add_show_field 'holding_t', :label => 'Holding'
     config.add_show_field 'extent_t', :label => 'Extent'
     config.add_show_field 'dimensions_t', :label => 'Dimensions'
@@ -215,19 +215,6 @@ class CatalogController < ApplicationController
 end 
 
 module ApplicationHelper
-  def link_for_my_tokens(options)
-    options_set = removeDuplicates(options[:value])
-    html_array = options_set.map do |value|
-      parse_json(value, 'label') do |v|
-        if (v['uri'])
-          '%s <a href="%s" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>' % [v['label'], url_for_document(v['uri'])]
-        else
-          v['label']
-        end
-      end
-	  end
-	  format_html_array(html_array)
-  end
   
   def link_for_my_local_tokens(options)
     values = options[:value]
@@ -244,6 +231,23 @@ module ApplicationHelper
     format_html_array(options[:value])
   end
 
+  def show_publishers(options)
+    publishers = Set.new
+    data = Array.new
+    index = 0
+    html_array = options[:value].map do |value|
+      value = value.strip
+      if publishers.include?(value)
+        # already in the array
+      else
+        data[index] = value
+        index += 1
+        publishers.add(value)
+      end
+    end
+    format_html_array(data)
+  end
+
   def simple_link(options)
     values = options[:value]
     values = [values] unless Array === values
@@ -256,9 +260,17 @@ module ApplicationHelper
   end
 
   def show_subjects(options)
-    html_array = options[:value].map do |value|
+    options = removeDuplicates(options[:value])
+    html_array = options.map do |value|
       parse_json(value) do |v|
-        'BOGUS Subject: ' + v.inspect # <<<<<<<< REPLACE THIS LINE
+        type = v['type']
+        if (isExternalLink(v['uri']))
+          '%s <a href="%s" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>' % [v['label'], url_for_document(v['uri'])]
+        elsif type['person'] || type['organization']
+          '<a href="%s">%s</a>' % [url_for_document(v['id']), v['label']] 
+        else
+          v['label']
+        end
       end
     end
     format_html_array(html_array)
@@ -378,15 +390,14 @@ module ApplicationHelper
     index = 0
     array.map do |value|
       json = JSON.parse(value)
-      label = json['label']
+      label = json['label'].strip
+      type = json['type']
       if labels.include?(label)
         label_index = getIndexBasedOnLabel(options, label)
         data = options[label_index]
         json1 = JSON.parse(data)
-        if json1['uri'] === nil && json['uri'] != nil
-          options.delete(data)
-        end
-        if json['uri']
+        options.delete(data) unless isExternalLink(json1['uri'])
+        if isExternalLink(json['uri'])
           options[index] = value
           index = index+1
         end
@@ -414,6 +425,9 @@ module ApplicationHelper
     }
   end
 
+  def isExternalLink(uri)
+    return uri['http://id.']
+  end
 
 
 end
