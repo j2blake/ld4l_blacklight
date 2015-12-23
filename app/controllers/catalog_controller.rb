@@ -219,6 +219,7 @@ module ApplicationHelper
   def link_for_my_local_tokens(options)
     values = options[:value]
     values = [values] unless Array === values
+    values = removeAlternates(values)
     html_array = values.map do |value|
       parse_json(value, 'id', 'label') do |v| 
         '<a href="%s">%s</a>' % [url_for_document(v['id']), v['label']]
@@ -237,9 +238,7 @@ module ApplicationHelper
     index = 0
     html_array = options[:value].map do |value|
       value = value.strip
-      if publishers.include?(value)
-        # already in the array
-      else
+      if not publishers.include?(value)
         data[index] = value
         index += 1
         publishers.add(value)
@@ -429,5 +428,18 @@ module ApplicationHelper
     return uri['http://id.']
   end
 
+  def removeAlternates(values)
+    uriSet = Set.new
+    options = Array.new
+    index = 0
+    values.map do |value|
+      json = JSON.parse(value)
+      uri = json['uri'].strip
+      if not uriSet.include?(uri)
+        options[index] = value
+      end
+    end
+    options
+  end
 
 end
