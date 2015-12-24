@@ -324,9 +324,9 @@ module ApplicationHelper
     html_array = jsons.map do |json|
       prop = uri_localname(json['property'])
       if json['id']
-        '%s ==> <a href="%s">%s</a>' % [prop, url_for_document(json['id']), json['label']]
+        '<a href="%s">%s</a>' % [url_for_document(json['id']), json['label']]
       else
-        '%s ==> <a href="%s">%s</a>' % [prop, uri, json['label']]
+        '<a href="%s">%s</a>' % [uri, json['label']]
       end
     end
     format_html_array(html_array)
@@ -384,6 +384,7 @@ module ApplicationHelper
   end
 
   def removeDuplicates(array)
+    array = removeAlternates(array) # found duplicate topics with same uri
     labels = Set.new
     options = Array.new
     index = 0
@@ -409,7 +410,8 @@ module ApplicationHelper
     result = Set.new
     options.map do |value|
       if value
-        result.add(value)
+        json = JSON.parse(value)
+        result.add(value) unless json['label'].length === 0   # found external topics with no labels
       end
     end
     result
@@ -429,19 +431,7 @@ module ApplicationHelper
   end
 
   def removeAlternates(values)
-    uriSet = Set.new
-    options = Array.new
-    index = 0
-    values.map do |value|
-      json = JSON.parse(value)
-      uri = json['uri'].strip
-      if not uriSet.include?(uri)
-        options[index] = value
-        uriSet.add(uri)
-        index += 1
-      end
-    end
-    options
+    values.uniq { |v| JSON.parse(v)['uri'] }
   end
 
 end
