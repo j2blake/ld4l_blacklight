@@ -541,6 +541,7 @@
    <field name="published_display" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="language_display" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="source_site_display" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="rdftype" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="class_display" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="class_facet" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="language_facet" type="string" indexed="true" stored="true" multiValued="true" />
