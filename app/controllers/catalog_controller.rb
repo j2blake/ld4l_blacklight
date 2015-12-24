@@ -437,6 +437,8 @@ module ApplicationHelper
       uri = json['uri'].strip
       if not uriSet.include?(uri)
         options[index] = value
+        uriSet.add(uri)
+        index += 1
       end
     end
     options
