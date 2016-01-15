@@ -534,6 +534,9 @@
    <field name="creator_token" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="subject_token" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="instance_token" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="work_id_token" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="work_link_token" type="string" indexed="true" stored="true" multiValued="true"/>
+   <field name="instance_link_token" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="alt_titles_t" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="material_type_display" type="string" indexed="true" stored="true" multiValued="true"/>
    <field name="lc_callnum_display" type="string" indexed="true" stored="true" multiValued="true"/>

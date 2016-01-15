@@ -121,6 +121,7 @@ class CatalogController < ApplicationController
     config.add_show_field 'alt_titles_t', :label => 'Alternate title',  :helper_method => 'multiline_helper'
     config.add_show_field 'instance_of_token', :label => 'Instance of', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'instance_token', :label => 'Instance', :helper_method => 'show_instances'
+    config.add_show_field 'instance_link_token', :label => 'At other libraries', :helper_method => 'show_links_to_other_site'
     config.add_show_field 'subject_token', :label => 'Topic', :helper_method => 'show_subjects'
     config.add_show_field 'creator_token', :label => 'Creator', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'contributor_token', :label => 'Contributor', :helper_method => 'link_for_my_local_tokens'
@@ -138,6 +139,8 @@ class CatalogController < ApplicationController
     config.add_show_field 'birthdate_t', :label => 'Date of birth'
     config.add_show_field 'related_works_token', :label => 'Related works', :helper_method => 'show_related_works'
     config.add_show_field 'uri_token', :label => 'RDF linked data', :helper_method => 'show_rdf_link'
+    config.add_show_field 'work_id_token', :label => 'Work IDs', :helper_method => 'show_work_ids'
+    config.add_show_field 'work_link_token', :label => 'At other libraries', :helper_method => 'show_links_to_other_site'
 
     # "fielded" search configuration. Used by pulldown among other places.
     # For supported keys in hash, see rdoc for Blacklight::SearchFields
@@ -327,6 +330,28 @@ module ApplicationHelper
         '<a href="%s">%s</a>' % [url_for_document(json['id']), json['label']]
       else
         '<a href="%s">%s</a>' % [uri, json['label']]
+      end
+    end
+    format_html_array(html_array)
+  end
+
+  def show_work_ids(options)
+    values = options[:value]
+    values = [values] unless Array === values
+    html_array = values.map do |value|
+      parse_json(value, 'uri', 'localname') do |v|
+        '<a href="%s">%s</a>' % [v['uri'], v['localname']]
+      end
+    end
+    format_html_array(html_array)
+  end
+
+  def show_links_to_other_site(options)
+    values = options[:value]
+    values = [values] unless Array === values
+    html_array = values.map do |value|
+      parse_json(value, 'id', 'site') do |v|
+        '<a href="%s">%s</a>' % [url_for_document(v['id']), v['site']]
       end
     end
     format_html_array(html_array)
