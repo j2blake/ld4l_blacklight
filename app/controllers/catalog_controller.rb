@@ -7,6 +7,7 @@ class CatalogController < ApplicationController
     ## Default parameters to send to solr for all search-like requests. See also SearchBuilder#processed_parameters
     config.default_solr_params = { 
       :qt => 'search',
+      :fl => '*',
       :rows => 10 
     }
     
@@ -83,19 +84,21 @@ class CatalogController < ApplicationController
 
     # solr fields to be displayed in the index (search results) view
     #   The ordering of the field names is the order of the display 
-    config.add_index_field 'title_t', :label => 'Title'
-    config.add_index_field 'title_display', :label => 'Title'
-    config.add_index_field 'title_vern_display', :label => 'Title'
-    config.add_index_field 'author_display', :label => 'Author'
-    config.add_index_field 'author_vern_display', :label => 'Author'
-    config.add_index_field 'format', :label => 'Format'
+    config.add_index_field 'source_site_facet', :label => 'Library'
     config.add_index_field 'language_facet', :label => 'Language'
-    config.add_index_field 'published_display', :label => 'Published'
-    config.add_index_field 'published_vern_display', :label => 'Published'
-    config.add_index_field 'lc_callnum_display', :label => 'Call number'
+    config.add_index_field 'class_facet', :label => 'Class'
+    # config.add_index_field 'title_t', :label => 'Title'
+    # config.add_index_field 'title_display', :label => 'Title'
+    # config.add_index_field 'title_vern_display', :label => 'Title'
+    # config.add_index_field 'author_display', :label => 'Author'
+    # config.add_index_field 'author_vern_display', :label => 'Author'
+    # config.add_index_field 'format', :label => 'Format'
+    # config.add_index_field 'published_display', :label => 'Published'
+    # config.add_index_field 'published_vern_display', :label => 'Published'
+    # config.add_index_field 'lc_callnum_display', :label => 'Call number'
     
-    config.add_index_field 'class_display', :label => 'Class'
 
+    
     # solr fields to be displayed in the show (single result) view
     #   The ordering of the field names is the order of the display 
     config.add_show_field 'title_t', :label => 'Title'
@@ -340,7 +343,12 @@ module ApplicationHelper
     values = [values] unless Array === values
     html_array = values.map do |value|
       parse_json(value, 'uri', 'localname') do |v|
-        '<a href="%s">%s</a>' % [v['uri'], v['localname']]
+        uri, localname = v.values_at('uri', 'localname')
+        if uri
+        '%s <a href="%s" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>'% [localname, uri]
+        else
+        localname
+        end
       end
     end
     format_html_array(html_array)
