@@ -1,4 +1,7 @@
 # -*- encoding : utf-8 -*-
+require 'net/http'
+require 'uri'
+
 class CatalogController < ApplicationController  
 
   include Blacklight::Catalog
@@ -84,9 +87,10 @@ class CatalogController < ApplicationController
 
     # solr fields to be displayed in the index (search results) view
     #   The ordering of the field names is the order of the display 
-    config.add_index_field 'source_site_facet', :label => 'Library'
-    config.add_index_field 'language_facet', :label => 'Language'
-    config.add_index_field 'class_facet', :label => 'Class'
+    config.add_index_field 'source_site_facet', :label => 'Library',  :helper_method => 'lib_helper'
+    config.add_index_field 'class_display', :label => 'Class'
+    config.add_index_field 'uri_token', :label => 'RDF linked data', :helper_method => 'show_rdf_link'
+    #config.add_index_field 'language_facet', :label => 'Language'
     # config.add_index_field 'title_t', :label => 'Title'
     # config.add_index_field 'title_display', :label => 'Title'
     # config.add_index_field 'title_vern_display', :label => 'Title'
@@ -119,15 +123,15 @@ class CatalogController < ApplicationController
     config.add_show_field 'material_type_display', :label => 'Smaterials'
     #config.add_show_field 'class_facet', :label => 'Class',  :helper_method => 'multiline_helper'
     
-    config.add_show_field 'source_site_display', :label => 'Library'
+    config.add_show_field 'source_site_display', :label => 'Library',  :helper_method => 'lib_helper'
     config.add_show_field 'class_display', :label => 'Class',  :helper_method => 'multiline_helper'
     config.add_show_field 'alt_titles_t', :label => 'Alternate title',  :helper_method => 'multiline_helper'
     config.add_show_field 'instance_of_token', :label => 'Instance of', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'instance_token', :label => 'Instance', :helper_method => 'show_instances'
     config.add_show_field 'instance_link_token', :label => 'At other libraries', :helper_method => 'show_links_to_other_site'
-    config.add_show_field 'subject_token', :label => 'Topic', :helper_method => 'show_subjects'
     config.add_show_field 'creator_token', :label => 'Creator', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'contributor_token', :label => 'Contributor', :helper_method => 'link_for_my_local_tokens'
+    config.add_show_field 'subject_token', :label => 'Topic', :helper_method => 'show_subjects'
     config.add_show_field 'created_token', :label => 'Created', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'contributed_token', :label => 'Contributed to', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'worldcat_id_token', :label => 'WorldCat ID', :helper_method => 'simple_link'
@@ -141,9 +145,9 @@ class CatalogController < ApplicationController
     config.add_show_field 'supplementary_content_note_t', :label => 'Supplementary content note'
     config.add_show_field 'birthdate_t', :label => 'Date of birth'
     config.add_show_field 'related_works_token', :label => 'Related works', :helper_method => 'show_related_works'
-    config.add_show_field 'uri_token', :label => 'RDF linked data', :helper_method => 'show_rdf_link'
-    config.add_show_field 'work_id_token', :label => 'Work IDs', :helper_method => 'show_work_ids'
     config.add_show_field 'work_link_token', :label => 'At other libraries', :helper_method => 'show_links_to_other_site'
+    config.add_show_field 'work_id_token', :label => 'Work IDs', :helper_method => 'show_work_ids'
+    config.add_show_field 'uri_token', :label => 'RDF linked data', :helper_method => 'show_rdf_link'
 
     # "fielded" search configuration. Used by pulldown among other places.
     # For supported keys in hash, see rdoc for Blacklight::SearchFields
@@ -222,6 +226,24 @@ end
 
 module ApplicationHelper
   
+  def lib_helper(options)
+    values = options[:value]
+    values = [values] unless Array === values
+    html_array = values.map do |value|
+    univ = ''
+      if value === 'Cornell'
+        univ = 'cornell'
+      elsif value === 'Stanford'
+        univ = 'stanford'
+      elsif value === 'Harvard'
+       univ = 'harvard'
+      end
+      '<img border="0" src="/assets/%s.png" height="40" align="bottom">' % [univ]
+    end
+    format_html_array(html_array)
+  end
+
+
   def link_for_my_local_tokens(options)
     values = options[:value]
     values = [values] unless Array === values
@@ -359,10 +381,44 @@ module ApplicationHelper
     values = [values] unless Array === values
     html_array = values.map do |value|
       parse_json(value, 'id', 'site') do |v|
-        '<a href="%s">%s</a>' % [url_for_document(v['id']), v['site']]
+        id = url_for_document(v['id'])
+        # NEXT LINE HAS TO BE REMOVED ONCE HAVE DATA.
+        id = '687474703a2f2f64726166742e6c64346c2e6f72672f636f726e656c6c2f6e313032303633'   
+        title = get_title(id)
+        logo = ''
+        site= v['site']
+        if site === 'Cornell'
+          logo = 'cornellLogo.png'
+        elsif site === 'Stanford'
+          logo = 'stanfordLogo.png'
+        elsif site === 'Harvard'
+          logo = 'harvardLogo.png'
+        end
+        '<a href="%s">%s</a> <img border="0" src="/assets/%s" height="20">' % [id, title, logo]
       end
     end
     format_html_array(html_array)
+  end
+
+  def get_title(doc_id)
+    json = query_method(doc_id)
+    doc = json['response']['docs']
+    html_array = doc.map do |value|
+      return value['title_display']
+    end
+  end
+
+  def query_method(doc_id)
+    # THIS URL HAS TO BE UPDATED ON REAL SYSTEM. NO LOCALHOST
+    uri = URI.parse('http://localhost:8983/solr/blacklight-core/select?fq=id:'+doc_id.to_s+'&wt=json&indent=true&debugQuery=true')
+    http = Net::HTTP.new(uri.host, uri.port)
+    req = Net::HTTP::Get.new(uri.request_uri)
+    rsp = http.request(req)
+    if rsp.to_s.include?("HTTPNotFound")
+      return 0
+    end
+    json = JSON.parse(rsp.body.to_s)
+    return json
   end
 
   #
