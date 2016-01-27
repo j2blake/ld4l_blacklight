@@ -61,7 +61,7 @@ class CatalogController < ApplicationController
     config.add_facet_field 'format', :label => 'Format'
     config.add_facet_field 'pub_date', :label => 'Publication Year', :single => true
     config.add_facet_field 'subject_topic_facet', :label => 'Topic', :limit => 20 
-    config.add_facet_field 'language_facet', :label => 'Language', :limit => 20, :sort => 'index'
+    config.add_facet_field 'language_facet', :label => 'Language', :limit => 20, :sort => 'count'
     config.add_facet_field 'lc_1letter_facet', :label => 'Call Number' 
     config.add_facet_field 'subject_geo_facet', :label => 'Region' 
     config.add_facet_field 'subject_era_facet', :label => 'Era'  
@@ -167,46 +167,50 @@ class CatalogController < ApplicationController
     # solr request handler? The one set in config[:default_solr_parameters][:qt],
     # since we aren't specifying it otherwise. 
     
-    config.add_search_field 'text', :label => 'Text'
+    #config.add_search_field 'text', :label => 'Text'
     
 
     # Now we see how to over-ride Solr request handler defaults, in this
     # case for a BL "search field", which is really a dismax aggregate
     # of Solr search fields. 
     
-    config.add_search_field('title') do |field|
-      # solr_parameters hash are sent to Solr as ordinary url query params. 
-      field.solr_parameters = { :'spellcheck.dictionary' => 'title' }
+    # Do not work, so commented out for now
+    # config.add_search_field('title') do |field|
+    #   # solr_parameters hash are sent to Solr as ordinary url query params. 
+    #   field.solr_parameters = { :'spellcheck.dictionary' => 'title' }
 
-      # :solr_local_parameters will be sent using Solr LocalParams
-      # syntax, as eg {! qf=$title_qf }. This is neccesary to use
-      # Solr parameter de-referencing like $title_qf.
-      # See: http://wiki.apache.org/solr/LocalParams
-      field.solr_local_parameters = { 
-        :qf => '$title_qf',
-        :pf => '$title_pf'
-      }
-    end
+    #   # :solr_local_parameters will be sent using Solr LocalParams
+    #   # syntax, as eg {! qf=$title_qf }. This is neccesary to use
+    #   # Solr parameter de-referencing like $title_qf.
+    #   # See: http://wiki.apache.org/solr/LocalParams
+    #   field.solr_local_parameters = { 
+    #     :qf => '$title_qf',
+    #     :pf => '$title_pf'
+    #   }
+    # end
     
-    config.add_search_field('author') do |field|
-      field.solr_parameters = { :'spellcheck.dictionary' => 'author' }
-      field.solr_local_parameters = { 
-        :qf => '$author_qf',
-        :pf => '$author_pf'
-      }
-    end
+    # Do not work, so commented out for now
+    # config.add_search_field('author') do |field|
+    #   field.solr_parameters = { :'spellcheck.dictionary' => 'author' }
+    #   field.solr_local_parameters = { 
+    #     :qf => '$author_qf',
+    #     :pf => '$author_pf'
+    #   }
+    # end
     
     # Specifying a :qt only to show it's possible, and so our internal automated
     # tests can test it. In this case it's the same as 
     # config[:default_solr_parameters][:qt], so isn't actually neccesary. 
-    config.add_search_field('subject') do |field|
-      field.solr_parameters = { :'spellcheck.dictionary' => 'subject' }
-      field.qt = 'search'
-      field.solr_local_parameters = { 
-        :qf => '$subject_qf',
-        :pf => '$subject_pf'
-      }
-    end
+    
+    # Do not work, so commented out for now
+    # config.add_search_field('subject') do |field|
+    #   field.solr_parameters = { :'spellcheck.dictionary' => 'subject' }
+    #   field.qt = 'search'
+    #   field.solr_local_parameters = { 
+    #     :qf => '$subject_qf',
+    #     :pf => '$subject_pf'
+    #   }
+    # end
 
     # "sort results by" select (pulldown)
     # label in pulldown is followed by the name of the SOLR field to sort by and
@@ -307,16 +311,22 @@ module ApplicationHelper
     html_array = options[:value].map do |value|
       parse_json(value, 'label') do |v|
         label, localname = v.values_at('label', 'localname')
-        case localname
-        when nil
+        if !localname
           label
-        when 'Identifier'
-          label
-        when 'LocalILSIdentifier'
+        elsif localname == 'Identifier'
+          label              
+        elsif localname.casecmp('LocalILSIdentifier') == 0
           '%s (%s) <a href="https://newcatalog.library.cornell.edu/catalog/%s" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>'% [label, localname, label]
-        when 'Lccn'
-          slash_index = label.rindex('/L')
-          lccn_Identifier = label[0, slash_index].strip
+        elsif  localname.casecmp('Lccn') == 0
+          label = label.gsub(/\s+/, "")  # remove all whitespaces
+          label = label.downcase   # convert to lowercase
+          slash_index = label.rindex('/') # grab string before /
+          if slash_index
+            lccn_Identifier = label[0, slash_index-1].strip
+          else
+            lccn_Identifier = label.to_s
+          end
+
           '%s (%s) <a href="https://lccn.loc.gov/%s" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>'% [label, localname, lccn_Identifier]
         else
           label + " (#{localname})"
