@@ -125,7 +125,7 @@ class CatalogController < ApplicationController
     
     config.add_show_field 'source_site_display', :label => 'Library',  :helper_method => 'lib_helper'
     config.add_show_field 'class_display', :label => 'Class',  :helper_method => 'multiline_helper'
-    config.add_show_field 'alt_titles_t', :label => 'Alternate title',  :helper_method => 'multiline_helper'
+    config.add_show_field 'alt_titles_t', :label => 'Alternate title',  :helper_method => 'show_alternate_titles'
     config.add_show_field 'instance_of_token', :label => 'Instance of', :helper_method => 'link_for_my_local_tokens'
     config.add_show_field 'instance_token', :label => 'Instance', :helper_method => 'show_instances'
     config.add_show_field 'instance_link_token', :label => 'At other libraries', :helper_method => 'show_links_to_other_site'
@@ -264,6 +264,22 @@ module ApplicationHelper
     format_html_array(options[:value])
   end
 
+  def show_alternate_titles(options)
+    labels = Set.new
+    data = Array.new
+    index = 0
+    values = options[:value]
+    values = [values] unless Array === values
+    values.map do |value|
+      if not labels.include?(value.strip)
+        data[index] = value.strip
+        labels.add(value.strip)
+        index = index+1
+      end
+    end
+    format_html_array(data)
+  end
+
   def show_publishers(options)
     publishers = Set.new
     data = Array.new
@@ -297,7 +313,7 @@ module ApplicationHelper
         type = v['type']
         if (isExternalLink(v['uri']))
           '%s <a href="%s" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>' % [v['label'], url_for_document(v['uri'])]
-        elsif type['person'] || type['organization']
+        elsif type && (type['person'] || type['organization'])
           '<a href="%s">%s</a>' % [url_for_document(v['id']), v['label']] 
         else
           v['label']
@@ -495,12 +511,14 @@ module ApplicationHelper
       type = json['type']
       if labels.include?(label)
         label_index = getIndexBasedOnLabel(options, label)
-        data = options[label_index]
-        json1 = JSON.parse(data)
-        options.delete(data) unless isExternalLink(json1['uri'])
-        if isExternalLink(json['uri'])
-          options[index] = value
-          index = index+1
+        if (label_index && label_index > 0)
+          data = options[label_index]
+          json1 = JSON.parse(data)
+          options.delete(data) unless isExternalLink(json1['uri'])
+          if isExternalLink(json['uri'])
+            options[index] = value
+            index = index+1
+          end
         end
       else
         labels.add(label)
@@ -519,11 +537,16 @@ module ApplicationHelper
   end
 
   def getIndexBasedOnLabel(options, label)
+    ret_index = -1
     options.each_with_index {|value, index|
-      json = JSON.parse(value)
-      if json['label'] === label
-        return index
+      if value && value.strip.length >0
+        json = JSON.parse(value)
+        if json['label'] === label
+          ret_index = index
+          break
+        end
       end
+    return ret_index
     }
   end
 
