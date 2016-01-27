@@ -314,7 +314,9 @@ module ApplicationHelper
         if !localname
           label
         elsif localname == 'Identifier'
-          label              
+          label
+        elsif localname.casecmp('OclcIdentifier') == 0
+          '%s (%s) <a href="http://www.worldcat.org/oclc/%s" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>'% [label, localname, label]
         elsif localname.casecmp('LocalILSIdentifier') == 0
           '%s (%s) <a href="https://newcatalog.library.cornell.edu/catalog/%s" target="_blank"><img border="0" src="/assets/infoIcon.png" height="18" ></a>'% [label, localname, label]
         elsif  localname.casecmp('Lccn') == 0
@@ -463,7 +465,7 @@ module ApplicationHelper
   # Take an array of HTML values, and insert <br> between them. If more than 5 values,
   # wrap them in a scrolling div. Make the whole thing html_safe, and return it.
   #
-  SCROLLING_DIV_BEGIN = '<div style="width:300px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">'
+  SCROLLING_DIV_BEGIN = '<div style="width:400px;height:110px;border:1px solid #ccc;line-height:1.5em;overflow:auto;padding:5px;">'
   SCROLLING_DIV_END = '</div>'
   def format_html_array(html_array)
     html_str = html_array.join('<br>')
