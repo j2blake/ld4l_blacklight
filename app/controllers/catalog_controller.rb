@@ -410,8 +410,6 @@ module ApplicationHelper
     html_array = values.map do |value|
       parse_json(value, 'id', 'site') do |v|
         id = url_for_document(v['id'])
-        # NEXT LINE HAS TO BE REMOVED ONCE HAVE DATA.
-        id = '687474703a2f2f64726166742e6c64346c2e6f72672f636f726e656c6c2f6e313032303633'   
         title = get_title(id)
         logo = ''
         site= v['site']
