@@ -147,7 +147,7 @@ class CatalogController < ApplicationController
     config.add_show_field 'related_works_token', :label => 'Related works', :helper_method => 'show_related_works'
     config.add_show_field 'work_link_token', :label => 'At other libraries', :helper_method => 'show_links_to_other_site'
     config.add_show_field 'work_id_token', :label => 'Work IDs', :helper_method => 'show_work_ids'
-    config.add_show_field 'stackview_score_i', :label => 'Usage rating'
+    config.add_show_field 'stackview_score_i', :label => 'Usage rating', :helper_method => 'show_stackview_score'
     config.add_show_field 'uri_token', :label => 'RDF linked data', :helper_method => 'show_rdf_link'
 
     # "fielded" search configuration. Used by pulldown among other places.
@@ -231,6 +231,15 @@ end
 
 module ApplicationHelper
   
+  def show_stackview_score(options)
+    values = options[:value]
+    values = [values] unless Array === values
+    html_array = values.map do |value|
+        value.to_s + "  (range: 1-100)"
+    end  
+    format_html_array(html_array) 
+  end
+
   def lib_helper(options)
     values = options[:value]
     values = [values] unless Array === values
