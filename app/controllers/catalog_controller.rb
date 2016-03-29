@@ -77,7 +77,7 @@ class CatalogController < ApplicationController
     }
 
     config.add_facet_field 'category_facet', :label => 'Category', :show => false, :sort => 'index'
-    config.add_facet_field 'class_facet', :label => 'Class', :show => false, :sort => 'index'
+    config.add_facet_field 'class_facet', :label => 'Class', :show => false, :sort => 'count', :limit => 50
     config.add_facet_field 'category_class_pivot_field', :label => 'Category/Class', :pivot => ['category_facet', 'class_facet']
 
     # Have BL send all facet field names to Solr, which has been the default
